@@ -59,17 +59,18 @@ class Product(models.Model):
 
 
 class BrowsingHistory(models.Model):
-    user = models.ForeignKey(Users, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='browsing_history')
-    timestamp = models.DateTimeField(auto_now_add=True)
-    interaction_type = models.CharField(
-        max_length=50,
-        choices=[
+    INTERACTION_CHOICES=[
             ('view', 'View'),
             ('like', 'Like'),
             ('wishlist', 'Wishlist'),
             ('cart', 'Cart'),
         ]
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='browsing_history')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    interaction_type = models.CharField(
+        max_length=50,
+        choices=INTERACTION_CHOICES,
     )
 
     def __str__(self):
@@ -100,7 +101,11 @@ class QuizResult(models.Model):
 class RoutinePlan(models.Model):
     routine_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Users, on_delete=models.CASCADE,related_name='routine_plans')
-    plan_name = models.CharField(max_length=50) 
+    plan_name = models.CharField(max_length=50,choices=[
+        ('full', 'Full Plan'),
+        ('hydration', 'Hydration Plan'),
+        ('minimalist', 'Minimalist Plan'),
+    ]) 
     steps = models.JSONField(default=list)  
     created_at = models.DateTimeField(auto_now_add=True)
 
