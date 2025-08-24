@@ -47,3 +47,17 @@ class LogInteraction(generics.CreateAPIView):
             {"status": "Interaction logged successfully."},
             status=status.HTTP_201_CREATED
         )
+
+class CreateProduct(generics.CreateAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        # Check if the data is valid
+        if serializer.is_valid():
+            serializer.save()  # Save the new product to the database
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
