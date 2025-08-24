@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser
-# Create your models here.
+
+
 class Users(AbstractBaseUser):
     user_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -29,7 +30,8 @@ class Users(AbstractBaseUser):
     is_superuser = models.BooleanField(default=False)  
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
-    
+
+
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -54,7 +56,8 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.brand} {self.name}"
-    
+
+
 class BrowsingHistory(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='browsing_history')
@@ -71,6 +74,8 @@ class BrowsingHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.product.name} - {self.interaction_type}"
+
+
 class QuizResult(models.Model):
     quiz_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Users, on_delete=models.CASCADE,related_name='quiz_results')
@@ -90,7 +95,8 @@ class QuizResult(models.Model):
 
     def __str__(self):
         return f"Quiz {self.quiz_id} for {self.user.email}"
-    
+
+
 class RoutinePlan(models.Model):
     routine_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(Users, on_delete=models.CASCADE,related_name='routine_plans')
@@ -100,6 +106,7 @@ class RoutinePlan(models.Model):
 
     def __str__(self):
         return f"{self.plan_name} for {self.user.email}"
+
 
 class ContextualData(models.Model):
     context_id = models.AutoField(primary_key=True)
