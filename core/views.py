@@ -5,7 +5,7 @@ from rest_framework import generics,status
 from .models import Product, BrowsingHistory,RoutinePlan,QuizResult,Users
 from .serializers import ProductSerializer
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated,IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from .routine_builder import RoutineBuilder
 from rest_framework.authtoken.models import Token
 class RegisterAPIView(APIView):

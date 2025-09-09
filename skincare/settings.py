@@ -43,13 +43,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'corsheaders',
     # Third party apps
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_extensions',
     # My App
     'core',
-    'django_extensions',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  

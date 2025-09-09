@@ -158,7 +158,7 @@ Response:
   "price": "300000",
   "message": "Product created successfully"
 }
-📊 Interaction Endpoints
+Interaction Endpoints
 6. Log Interaction - ثبت تعامل کاربر
 Endpoint: POST /api/interactions/log/
 Headers: Authorization: Token abc123token456
@@ -177,7 +177,7 @@ Response:
 {
   "status": "Interaction logged successfully."
 }
-🎯 Recommendation Endpoints
+Recommendation Endpoints
 7. Get Recommendations - دریافت پیشنهادات
 Endpoint: GET /api/recommendations/
 Headers: Authorization: Token abc123token456
@@ -201,7 +201,7 @@ Response:
     }
   ]
 }
-📝 Quiz Endpoints
+Quiz Endpoints
 8. Get Quiz Questions - دریافت سوالات کوییز
 Endpoint: GET /api/quiz/questions/
 Headers:Authorization: Token abc123token456
@@ -263,7 +263,7 @@ Response:
     }
   ]
 }
-🗓️ Routine Endpoints
+Routine Endpoints
 11. Generate Routine - ایجاد روتین مراقبتی
 Endpoint: POST /api/routines/generate/
 Headers:Authorization: Token abc123token456
@@ -376,7 +376,7 @@ Status Codes:
 
 
 
-دستورالعمل اجرای پروژه و تست (به سبک جنگو)
+دستورالعمل اجرای پروژه و تست
 اجرای پروژه (Running)
 1.	ابتدا مطمئن شوید Python 3 و pip روی سیستم شما نصب باشد.
 2.	وابستگی‌های پروژه را نصب کنید:
