@@ -1,10 +1,8 @@
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from django.db.models import Count, Q
-from .models import Product, BrowsingHistory, UserProfile, QuizResult
-from django.contrib.auth.models import User
+from django.db.models import Q
+from .models import Product, BrowsingHistory, Users, QuizResult
 from django.utils import timezone
-from datetime import timedelta
 import numpy as np
 
 class HybridRecommender:
@@ -50,11 +48,12 @@ class HybridRecommender:
             if user_profile is not None:
                 similarity_scores = cosine_similarity(user_profile, feature_matrix)
                 return similarity_scores.flatten()
+            
             return self.content_from_quiz_profile(user, all_products, feature_matrix)
         
         except Exception as e:
-            print(f"Content-based error: {e}")
             return np.zeros(len(all_products))
+        
     def create_user_profile(self, user, feature_matrix, all_products):
         user_view_history = BrowsingHistory.objects.filter(
             user=user, 
@@ -101,8 +100,8 @@ class HybridRecommender:
                 scores[product_index]=view_count
             return scores
         except Exception as e:
-            print(f"Collaborative error: {e}")
             return np.zeros(len(all_products))
+        
     def find_similar_users(self, user, max_users=5):
         user_viewed_products = set(BrowsingHistory.objects.filter(
             user=user, 
@@ -113,7 +112,7 @@ class HybridRecommender:
             return []
         
         similar_users = []
-        for other_user in User.objects.exclude(id=user.id):
+        for other_user in Users.objects.exclude(user_id=user.user_id):
             other_viewed = set(BrowsingHistory.objects.filter(
                 user=other_user,
                 interaction_type='view'
@@ -128,33 +127,30 @@ class HybridRecommender:
                     similar_users.append((other_user, similarity))
         
         similar_users.sort(key=lambda x: x[1], reverse=True)
-        return [user[0] for user, similarity in similar_users[:max_users]]
-    def contextual_scores(self, all_products, context):
+        return [user_obj for user_obj, similarity in similar_users[:max_users]]
     
-        scores = np.ones(len(all_products))       
+    def contextual_scores(self, all_products, context):
+        scores = np.ones(len(all_products))
+               
         if not context:
             return scores  
-        try:
-            
-            if context.get('season'):
-                season = context['season'].lower()
-                for i, product in enumerate(all_products):
-                    if self.is_seasonal_product(product, season):
-                        scores[i] *= 1.5 
-            
 
-            if context.get('device'):
-                device = context['device'].lower()
-                for i, product in enumerate(all_products):
-                    if device == 'mobile' and product.category in ['cleanser', 'moisturizer', 'sunscreen']:
-                        scores[i] *= 1.3  
-                        
-        except Exception as e:
-            print(f"Contextual error: {e}")
-        
+        if context.get('season'):
+            season = context['season'].lower()
+            for i, product in enumerate(all_products):
+                if self.is_seasonal_product(product, season):
+                    scores[i] *= 1.5 
+    
+        if context.get('device'):
+            device = context['device'].lower()
+            for i, product in enumerate(all_products):
+                if device == 'mobile' and product.category in ['cleanser', 'moisturizer', 'sunscreen']:
+                    scores[i] *= 1.3  
+                    
+
         return scores
+    
     def is_seasonal_product(self, product, season):
-        
         seasonal_keywords = {
             'summer': ['sunscreen', 'spf', 'lightweight', 'gel', 'oil-free'],
             'winter': ['hydrating', 'cream', 'rich', 'moisturizing', 'balm'],
@@ -168,3 +164,18 @@ class HybridRecommender:
             return any(keyword in product_text for keyword in seasonal_keywords[season])
         
         return False
+    def get_recommendation_reason(self, product, user, context=None):
+        reasons = []
+        
+        if user.skin_type and user.skin_type in product.skin_types:
+            reasons.append(f"Perfect for your {user.skin_type} skin")
+            
+        similar_users = self.find_similar_users(user, max_users=3)
+        
+        if similar_users:
+            reasons.append("Popular among users like you")
+            
+        if context and context.get('season'):
+            reasons.append(f"Great for {context['season']}")
+        
+        return " | ".join(reasons) if reasons else "Top recommendation for you"

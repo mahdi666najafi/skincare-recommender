@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Skincare API Tester</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding-top: 4rem; }
+    section { display: none; }
+    section.active { display: block; }
+    pre { background: #f8f9fa; padding: 1rem; border-radius: .5rem; }
+    .product-card { transition: transform 0.2s; }
+    .product-card:hover { transform: translateY(-5px); }
+    .reason-badge { font-size: 0.85rem; }
+    .quiz-option { margin-bottom: 0.5rem; }
+    .routine-card { border-left: 4px solid #0d6efd; margin-bottom: 1.5rem; }
+    .routine-step { padding: 0.75rem; border-bottom: 1px solid #eee; }
+    .routine-step:last-child { border-bottom: none; }
+    .step-number { 
+      width: 30px; height: 30px; 
+      background: #0d6efd; color: white;
+      border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center;
+      margin-right: 10px; font-weight: bold;
+    }
+    .quiz-card { margin-bottom: 1rem; }
+    .quiz-result-card { border-left: 4px solid #198754; }
+    .badge-skin-type { background-color: #6f42c1; }
+    .badge-concern { background-color: #fd7e14; }
+    .badge-preference { background-color: #20c997; }
+    .routine-header { background-color: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+    .routine-time { font-size: 0.9rem; color: #6c757d; }
+    .product-badge { background-color: #17a2b8; margin-right: 0.3rem; margin-bottom: 0.3rem; }
+    .step-duration { color: #28a745; font-weight: bold; }
+    .step-type-badge { background-color: #6f42c1; margin-right: 0.5rem; }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Skincare Tester</a>
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('register')">Register</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('login')">Login</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('products')">Products</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('interaction')">Interaction</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('recommend')">Recommendations</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('routines')">Routines</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" onclick="showSection('quiz')">Quiz</a></li>
+      </ul>
+      <span id="authStatus" class="navbar-text text-warning">Not logged in</span>
+      <button class="btn btn-outline-light btn-sm ms-2" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="container">
+    <!-- Register -->
+    <section id="register" class="active">
+      <h2>Register</h2>
+      <form onsubmit="registerUser(event)">
+        <input class="form-control mb-2" placeholder="Email" id="regEmail" required>
+        <input class="form-control mb-2" placeholder="Name" id="regName" required>
+        <input class="form-control mb-2" placeholder="Skin Type" id="regSkin">
+        <input class="form-control mb-2" placeholder="Password" type="password" id="regPass" required>
+        <button class="btn btn-primary">Register</button>
+      </form>
+      <pre id="regResult"></pre>
+    </section>
+
+    <!-- Login -->
+    <section id="login">
+      <h2>Login</h2>
+      <form onsubmit="loginUser(event)">
+        <input class="form-control mb-2" placeholder="Email" id="loginEmail" required>
+        <input class="form-control mb-2" placeholder="Password" type="password" id="loginPass" required>
+        <button class="btn btn-success">Login</button>
+      </form>
+      <pre id="loginResult"></pre>
+    </section>
+
+    <!-- Products -->
+    <section id="products">
+      <h2>Products</h2>
+      <button class="btn btn-info mb-2" onclick="getProducts()">List Products</button>
+      <div class="row" id="productsList"></div>
+      <h4>Create Product</h4>
+      <form onsubmit="createProduct(event)">
+        <input class="form-control mb-2" placeholder="Name" id="prodName" required>
+        <input class="form-control mb-2" placeholder="Description" id="prodDesc">
+        <button class="btn btn-primary">Create</button>
+      </form>
+      <pre id="prodResult"></pre>
+    </section>
+
+    <!-- Interaction -->
+    <section id="interaction">
+      <h2>Interaction Log</h2>
+      <form onsubmit="logInteraction(event)">
+        <input class="form-control mb-2" placeholder="Product ID" id="intProduct" required>
+        <select class="form-control mb-2" id="intType" required>
+          <option value="">Select Interaction Type</option>
+          <option value="view">View</option>
+          <option value="purchase">Purchase</option>
+          <option value="wishlist">Wishlist</option>
+          <option value="rating">Rating</option>
+        </select>
+        <button class="btn btn-warning">Log</button>
+      </form>
+      <pre id="intResult"></pre>
+    </section>
+
+    <!-- Recommendations -->
+    <section id="recommend">
+      <h2>Recommendations</h2>
+      <div class="row mb-3">
+        <div class="col-md-3">
+          <input class="form-control" placeholder="Limit (default: 10)" type="number" id="recLimit" min="1" max="50">
+        </div>
+        <div class="col-md-3">
+          <select class="form-control" id="recSeason">
+            <option value="">Select Season</option>
+            <option value="spring">Spring</option>
+            <option value="summer">Summer</option>
+            <option value="fall">Fall</option>
+            <option value="winter">Winter</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-control" id="recDevice">
+            <option value="">Select Device</option>
+            <option value="mobile">Mobile</option>
+            <option value="desktop">Desktop</option>
+            <option value="tablet">Tablet</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-secondary w-100" onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+      </div>
+      <div id="recContent"></div>
+      <pre id="recResult" style="display: none;"></pre>
+    </section>
+
+    <!-- Routines -->
+    <section id="routines">
+      <h2>Routines</h2>
+      <button class="btn btn-secondary mb-2" onclick="getRoutines()">Get All Routines</button>
+      <form onsubmit="generateRoutine(event)">
+        <div class="row">
+          <div class="col-md-6">
+            <input class="form-control mb-2" placeholder="Skin Type" id="routineSkin">
+          </div>
+          <div class="col-md-6">
+            <button class="btn btn-info w-100">Generate Routine</button>
+          </div>
+        </div>
+      </form>
+      <div id="routinesContent"></div>
+      <pre id="routineResult" style="display: none;"></pre>
+    </section>
+
+    <!-- Quiz -->
+    <section id="quiz">
+      <h2>Quiz</h2>
+      <button class="btn btn-secondary mb-2" onclick="getQuizQuestions()">Get Questions</button>
+      
+      <div id="quizFormContainer" class="mb-3" style="display: none;">
+        <h4>Answer Questions</h4>
+        <form id="quizForm" onsubmit="submitQuiz(event)">
+          <div id="quizQuestions"></div>
+          <button class="btn btn-info mt-2">Submit Quiz</button>
+        </form>
+      </div>
+      
+      <button class="btn btn-dark mt-2" onclick="getQuizResults()">Get Results</button>
+      <div id="quizResultsContent"></div>
+      <pre id="quizResult" style="display: none;"></pre>
+    </section>
+  </main>
+
+  <script>
+    const BASE = "http://127.0.0.1:8000/api";
+    let token = localStorage.getItem("token");
+    let currentQuizQuestions = [];
+
+    function showSection(id) {
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+    
+    function setAuthStatus() {
+      document.getElementById("authStatus").innerText = token ? "Logged in" : "Not logged in";
+    }
+    
+    function logout() {
+      token = null;
+      localStorage.removeItem("token");
+      setAuthStatus();
+      showSection('login');
+    }
+    
+    setAuthStatus();
+
+    async function apiFetch(path, opts = {}) {
+      opts.headers = opts.headers || {};
+      if (token) opts.headers["Authorization"] = "Token " + token;
+      const res = await fetch(BASE + path, opts);
+      const text = await res.text();
+      try { return JSON.parse(text); } catch { return text; }
+    }
+
+    async function registerUser(e) {
+      e.preventDefault();
+      const body = { email: regEmail.value, name: regName.value, skin_type: regSkin.value, password: regPass.value };
+      const data = await apiFetch("/auth/register/", { method:"POST", headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      regResult.innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function loginUser(e) {
+      e.preventDefault();
+      const body = { email: loginEmail.value, password: loginPass.value };
+      const data = await apiFetch("/auth/login/", { method:"POST", headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      loginResult.innerText = JSON.stringify(data, null, 2);
+      if (data.token) {
+        token = data.token;
+        localStorage.setItem("token", token);
+        setAuthStatus();
+      }
+    }
+
+    async function getProducts() {
+      const data = await apiFetch("/products/");
+      productsList.innerHTML = (data || []).map(p => `
+        <div class="col-md-4">
+          <div class="card mb-2 product-card">
+            <div class="card-body">
+              <h5>${p.name}</h5>
+              <p class="text-muted">ID: ${p.product_id || p.id}</p>
+              <p>${p.description||''}</p>
+              ${p.category ? `<span class="badge bg-info">${p.category}</span>` : ''}
+              ${p.skin_type ? `<span class="badge bg-secondary ms-1">${p.skin_type}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function createProduct(e) {
+      e.preventDefault();
+      const body = { name: prodName.value, description: prodDesc.value };
+      const data = await apiFetch("/create-product/", { method:"POST", headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      prodResult.innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function logInteraction(e) {
+      e.preventDefault();
+      const body = { product: intProduct.value, interaction_type: intType.value };
+      const data = await apiFetch("/interaction-log/", { method:"POST", headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+      intResult.innerText = JSON.stringify(data, null, 2);
+    }
+
+    async function getRecommendations() {
+      const limit = recLimit.value || 10;
+      const season = recSeason.value;
+      const device = recDevice.value;
+      
+      let url = `/recommendations/?limit=${limit}`;
+      if (season) url += `&season=${season}`;
+      if (device) url += `&device=${device}`;
+      
+      const data = await apiFetch(url);
+      recResult.innerText = JSON.stringify(data, null, 2);
+      
+      // Display recommendations in a user-friendly way
+      if (data.recommendations) {
+        recContent.innerHTML = `
+          <div class="alert alert-info">
+            Found ${data.count} recommendations 
+            ${data.context.season ? `for ${data.context.season} season` : ''}
+            ${data.context.device ? `on ${data.context.device}` : ''}
+          </div>
+          <div class="row">
+            ${data.recommendations.map(rec => `
+              <div class="col-md-6 mb-3">
+                <div class="card h-100 product-card">
+                  <div class="card-body">
+                    <h5 class="card-title">${rec.name}</h5>
+                    <p class="text-muted">ID: ${rec.product_id || rec.id}</p>
+                    <p class="card-text">${rec.description || 'No description available'}</p>
+                    <div class="mb-2">
+                      ${rec.category ? `<span class="badge bg-info">${rec.category}</span>` : ''}
+                      ${rec.skin_type ? `<span class="badge bg-secondary ms-1">${rec.skin_type}</span>` : ''}
+                    </div>
+                    <div class="mt-2">
+                      <span class="badge bg-success reason-badge">${rec.reason || 'Recommended for you'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        recContent.innerHTML = `<div class="alert alert-warning">No recommendations found or error occurred.</div>`;
+      }
+    }
+
+    async function getRoutines() {
+      // Show loading spinner
+      routinesContent.innerHTML = `
+        <div class="text-center my-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      `;
+      
+      try {
+        const data = await apiFetch("/routines/");
+        routineResult.innerText = JSON.stringify(data, null, 2);
+        
+        // Display routines in a user-friendly way
+        if (data.success && data.routines && data.routines.length > 0) {
+          routinesContent.innerHTML = `
+            <div class="alert alert-info mt-3 d-flex justify-content-between align-items-center">
+              <span>Found ${data.count} routines</span>
+              <div>
+                <select class="form-select form-select-sm d-inline-block" style="width: 200px;" onchange="sortRoutines(this.value)">
+                  <option value="">Sort By</option>
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                </select>
+              </div>
+            </div>
+            <div id="sortedRoutines">
+              ${data.routines.map(routine => renderRoutineCard(routine)).join('')}
+            </div>
+          `;
+        } else if (!data.success && data.error) {
+          routinesContent.innerHTML = `
+            <div class="alert alert-danger mt-3">
+              <h5>Error Fetching Routines</h5>
+              <p>${data.error}</p>
+            </div>
+          `;
+        } else {
+          routinesContent.innerHTML = `<div class="alert alert-warning mt-3">No routines found.</div>`;
+        }
+      } catch (error) {
+        routinesContent.innerHTML = `
+          <div class="alert alert-danger mt-3">
+            <h5>Request Failed</h5>
+            <p>Failed to fetch routines: ${error.message}</p>
+          </div>
+        `;
+        routineResult.innerText = `Error: ${error.message}`;
+      }
+    }
+    
+    function renderRoutineCard(routine) {
+      // Safely access routine fields with defaults
+      const planName = routine.plan_name || 'Unnamed Routine';
+      const createdAt = routine.created_at 
+        ? new Date(routine.created_at).toLocaleString() 
+        : 'Unknown date';
+      const skinType = routine.skin_type || 'Not specified';
+      const concerns = Array.isArray(routine.concerns) ? routine.concerns : [];
+      const routineId = routine.id || routine.routine_id || 'N/A';
+      
+      return `
+        <div class="card routine-card mb-3" data-created-at="${routine.created_at || ''}">
+          <div class="card-body">
+            <div class="routine-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">${planName}</h5>
+                <span class="badge bg-info">ID: ${routineId}</span>
+              </div>
+              <div class="routine-time mt-1">${createdAt}</div>
+              <div class="mt-2">
+                <strong>Skin Type:</strong> <span class="badge badge-skin-type">${skinType}</span>
+                ${concerns.length > 0 ? `
+                  <div class="mt-1">
+                    <strong>Concerns:</strong> 
+                    ${concerns.map(c => `<span class="badge badge-concern me-1">${c}</span>`).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            <h6 class="mt-3">Steps:</h6>
+            <div class="routine-steps">
+              ${renderRoutineSteps(routine.steps)}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderRoutineSteps(steps) {
+      if (!steps || !Array.isArray(steps) || steps.length === 0) {
+        return '<div class="alert alert-warning">No steps available</div>';
+      }
+      
+      return steps.map((step, index) => {
+        // Handle both old and new step formats
+        const isNewFormat = typeof step === 'object' && step.product_id;
+        const stepName = typeof step === 'object' ? (step.name || step.step_name || `Step ${index+1}`) : step;
+        const stepDescription = typeof step === 'object' ? (step.description || step.instructions || '') : '';
+        const stepType = typeof step === 'object' ? (step.type || step.step || step.category || '') : '';
+        const stepProducts = isNewFormat 
+          ? [{
+              name: step.product_name,
+              brand: step.product_brand,
+              price: step.product_price,
+              image: step.product_image,
+              category: step.category
+            }] 
+          : (typeof step === 'object' ? (step.products || []) : []);
+        const stepDuration = typeof step === 'object' ? (step.duration || '') : '';
+        
+        return `
+          <div class="routine-step">
+            <div>
+              <span class="step-number">${index + 1}</span> 
+              ${stepType ? `<span class="badge step-type-badge">${stepType}</span>` : ''}
+              <strong>${stepName}</strong>
+            </div>
+            <div class="ms-5 mt-2">
+              ${stepDescription ? `<div class="mb-2">${stepDescription}</div>` : ''}
+              ${stepDuration ? `<div class="step-duration mb-2">Duration: ${stepDuration}</div>` : ''}
+              ${stepProducts.length > 0 ? `
+                <div class="mb-2">
+                  <strong>Recommended Products:</strong>
+                  <div class="mt-1">
+                    ${stepProducts.map(product => `
+                      <div class="d-flex align-items-center mb-2">
+                        ${product.image ? `
+                          <img src="${product.image}" alt="${product.name || product}" class="me-2" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                        ` : ''}
+                        <div>
+                          <span class="badge product-badge">${product.name || product}</span>
+                          ${product.brand ? `<span class="badge bg-secondary ms-1">${product.brand}</span>` : ''}
+                          ${product.price ? `<span class="badge bg-success ms-1">$${product.price}</span>` : ''}
+                          ${product.category && !stepType ? `<span class="badge bg-info ms-1">${product.category}</span>` : ''}
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function sortRoutines(criteria) {
+      const routinesContainer = document.getElementById('sortedRoutines');
+      const routineCards = Array.from(routinesContainer.getElementsByClassName('routine-card'));
+      
+      routineCards.sort((a, b) => {
+        const dateA = new Date(a.getAttribute('data-created-at') || 0);
+        const dateB = new Date(b.getAttribute('data-created-at') || 0);
+        if (criteria === 'date-desc') return dateB - dateA;
+        if (criteria === 'date-asc') return dateA - dateB;
+        return 0;
+      });
+      
+      routinesContainer.innerHTML = '';
+      routineCards.forEach(card => routinesContainer.appendChild(card));
+    }
+    
+    async function generateRoutine(e) {
+      e.preventDefault();
+      const body = { skin_type: routineSkin.value };
+      
+      try {
+        const data = await apiFetch("/routines/generate/", { 
+          method: "POST", 
+          headers: {'Content-Type':'application/json'}, 
+          body: JSON.stringify(body) 
+        });
+        
+        routineResult.innerText = JSON.stringify(data, null, 2);
+        
+        // Display the generated routine in a user-friendly way
+        if (data.success && data.data) {
+          routinesContent.innerHTML = `
+            <div class="alert alert-success mt-3">
+              <h5>${data.message || 'Routine generated successfully'}</h5>
+              <p class="mb-0">Skin type: ${routineSkin.value || 'Not specified'}</p>
+            </div>
+            ${renderRoutineCard(data.data)}
+          `;
+        } else if (data.error) {
+          routinesContent.innerHTML = `
+            <div class="alert alert-danger mt-3">
+              <h5>Error Generating Routine</h5>
+              <p>${data.error}</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        routinesContent.innerHTML = `
+          <div class="alert alert-danger mt-3">
+            <h5>Request Failed</h5>
+            <p>Failed to generate routine: ${error.message}</p>
+          </div>
+        `;
+        routineResult.innerText = `Error: ${error.message}`;
+      }
+    }
+
+    async function getQuizQuestions() {
+      const data = await apiFetch("/quiz/questions/");
+      quizResult.innerText = JSON.stringify(data, null, 2);
+      
+      if (data.questions) {
+        currentQuizQuestions = data.questions;
+        renderQuizForm(data.questions);
+      }
+    }
+    
+    function renderQuizForm(questions) {
+      const container = document.getElementById('quizQuestions');
+      container.innerHTML = '';
+      
+      questions.forEach(q => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'card mb-3 quiz-card';
+        questionDiv.innerHTML = `
+          <div class="card-body">
+            <h5 class="card-title">${q.question_text}</h5>
+            <div class="quiz-options">
+              ${renderQuestionOptions(q)}
+            </div>
+          </div>
+        `;
+        container.appendChild(questionDiv);
+      });
+      
+      document.getElementById('quizFormContainer').style.display = 'block';
+    }
+    
+    function renderQuestionOptions(question) {
+      if (question.question_type === 'single') {
+        return question.options.map(opt => `
+          <div class="form-check quiz-option">
+            <input class="form-check-input" type="radio" name="question_${question.question_id}" 
+                   id="opt_${question.question_id}_${opt.value}" value="${opt.value}" 
+                   data-field="${opt.related_field}">
+            <label class="form-check-label" for="opt_${question.question_id}_${opt.value}">
+              ${opt.text}
+            </label>
+          </div>
+        `).join('');
+      } else if (question.question_type === 'multiple') {
+        return question.options.map(opt => `
+          <div class="form-check quiz-option">
+            <input class="form-check-input" type="checkbox" name="question_${question.question_id}" 
+                   id="opt_${question.question_id}_${opt.value}" value="${opt.value}"
+                   data-field="${opt.related_field}">
+            <label class="form-check-label" for="opt_${question.question_id}_${opt.value}">
+              ${opt.text}
+            </label>
+          </div>
+        `).join('');
+      }
+      return '';
+    }
+
+    async function submitQuiz(e) {
+      e.preventDefault();
+      
+      // Collect answers from the form
+      const answers = {};
+      
+      currentQuizQuestions.forEach(q => {
+        if (q.question_type === 'single') {
+          const selected = document.querySelector(`input[name="question_${q.question_id}"]:checked`);
+          if (selected) {
+            const field = selected.getAttribute('data-field');
+            if (!answers[field]) answers[field] = selected.value;
+          }
+        } else if (q.question_type === 'multiple') {
+          const selected = document.querySelectorAll(`input[name="question_${q.question_id}"]:checked`);
+          if (selected.length > 0) {
+            const field = selected[0].getAttribute('data-field');
+            if (!answers[field]) answers[field] = [];
+            selected.forEach(input => answers[field].push(input.value));
+          }
+        }
+      });
+      
+      const data = await apiFetch("/quiz/submit/", { 
+        method: "POST", 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ answers }) 
+      });
+      
+      quizResult.innerText = JSON.stringify(data, null, 2);
+      
+      // Display quiz results in a user-friendly way
+      if (data.success && data.results) {
+        quizResultsContent.innerHTML = `
+          <div class="alert alert-success mt-3">
+            Quiz submitted successfully!
+          </div>
+          <div class="card quiz-result-card mt-3">
+            <div class="card-body">
+              <h5 class="card-title">Your Quiz Results</h5>
+              <div class="mb-2">
+                <strong>Skin Type:</strong> 
+                <span class="badge badge-skin-type">${data.results.skin_type || 'Not specified'}</span>
+              </div>
+              ${data.results.concerns && data.results.concerns.length > 0 ? `
+                <div class="mb-2">
+                  <strong>Concerns:</strong> 
+                  ${data.results.concerns.map(c => `<span class="badge badge-concern me-1">${c}</span>`).join('')}
+                </div>
+              ` : ''}
+              ${data.results.preferences && data.results.preferences.length > 0 ? `
+                <div class="mb-2">
+                  <strong>Preferences:</strong> 
+                  ${data.results.preferences.map(p => `<span class="badge badge-preference me-1">${p}</span>`).join('')}
+                </div>
+              ` : ''}
+              ${data.results.budget_range ? `
+                <div class="mb-2">
+                  <strong>Budget Range:</strong> ${data.results.budget_range}
+                </div>
+              ` : ''}
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-sm btn-outline-primary" onclick="generateRoutineFromQuiz('${data.results.skin_type}')">
+                Generate Routine Based on This Quiz
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    function generateRoutineFromQuiz(skinType) {
+      routineSkin.value = skinType;
+      showSection('routines');
+      
+      // Simulate click on generate button after a short delay
+      setTimeout(() => {
+        document.querySelector('#routines form button').click();
+      }, 300);
+    }
+    
+    async function getQuizResults() {
+      const data = await apiFetch("/quiz/results/");
+      quizResult.innerText = JSON.stringify(data, null, 2);
+      
+      // Display quiz results in a user-friendly way
+      if (data.results && data.results.length > 0) {
+        quizResultsContent.innerHTML = `
+          <div class="alert alert-info mt-3">
+            Found ${data.count} quiz results
+          </div>
+          ${data.results.map(result => `
+            <div class="card quiz-result-card mt-3">
+              <div class="card-body">
+                <h5 class="card-title">Quiz from ${new Date(result.timestamp).toLocaleDateString()}</h5>
+                <div class="mb-2">
+                  <strong>Skin Type:</strong> 
+                  <span class="badge badge-skin-type">${result.skin_type || 'Not specified'}</span>
+                </div>
+                ${result.concerns && result.concerns.length > 0 ? `
+                  <div class="mb-2">
+                    <strong>Concerns:</strong> 
+                    ${result.concerns.map(c => `<span class="badge badge-concern me-1">${c}</span>`).join('')}
+                  </div>
+                ` : ''}
+                ${result.preferences && result.preferences.length > 0 ? `
+                  <div class="mb-2">
+                    <strong>Preferences:</strong> 
+                    ${result.preferences.map(p => `<span class="badge badge-preference me-1">${p}</span>`).join('')}
+                  </div>
+                ` : ''}
+                ${result.budget_range ? `
+                  <div class="mb-2">
+                    <strong>Budget Range:</strong> ${result.budget_range}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-sm btn-outline-primary" onclick="generateRoutineFromQuiz('${result.skin_type}')">
+                  Generate Routine Based on This Result
+                </button>
+              </div>
+            </div>
+          `).join('')}
+        `;
+      } else {
+        quizResultsContent.innerHTML = `<div class="alert alert-warning mt-3">No quiz results found.</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
